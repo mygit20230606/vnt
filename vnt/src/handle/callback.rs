@@ -25,6 +25,7 @@ impl DeviceInfo {
         return Self { name, version };
     }
 }
+
 #[derive(Debug)]
 pub struct ConnectInfo {
     // 第几次连接，从1开始
@@ -33,11 +34,7 @@ pub struct ConnectInfo {
     pub address: SocketAddr,
 }
 
-impl Display for ConnectInfo {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!("count={} ,address={}", self.count, self.address))
-    }
-}
+
 
 impl ConnectInfo {
     pub fn new(count: usize, address: SocketAddr) -> Self {
