@@ -174,7 +174,7 @@ jobs:
             TAG=$GITHUB_SHA
           fi
           mv ./target/$TARGET/release/$EXEC_VNT_CLI ./artifacts/$EXEC_VNT_CLI
-          mv ./target/$TARGET/release/$EXEC_VN_LINK_CLI ./artifacts/$EXEC_VN_LINK_CLI
+    
           mv ./README ./artifacts/README.txt
           cd ./artifacts
           tar -czf vnt-$TARGET-$TAG.tar.gz *
