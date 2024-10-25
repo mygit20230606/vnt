@@ -15,10 +15,6 @@ impl VntCallback for VntHandler {
         println!("create_tun {}", info)
     }
 
-    fn connect(&self, info: ConnectInfo) {
-        println!("connect {}", info)
-    }
-
     fn handshake(&self, info: HandshakeInfo) -> bool {
         println!("handshake {}", info);
         true
