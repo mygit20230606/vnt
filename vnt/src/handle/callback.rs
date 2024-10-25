@@ -26,25 +26,6 @@ impl DeviceInfo {
     }
 }
 
-#[derive(Debug)]
-pub struct ConnectInfo {
-    // 第几次连接，从1开始
-    pub count: usize,
-    // 服务端地址
-    pub address: SocketAddr,
-}
-
-impl Display for ConnectInfo {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!("count={} ,address={}", self.count, self.address))
-    }
-}
-
-impl ConnectInfo {
-    pub fn new(count: usize, address: SocketAddr) -> Self {
-        Self { count, address }
-    }
-}
 
 #[derive(Debug)]
 pub struct HandshakeInfo {
