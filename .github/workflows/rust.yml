@@ -155,8 +155,6 @@ jobs:
           EOF
       - name: Install rust target
         run: rustup target add $TARGET
-      - name: Run build vn-link-cli
-        run: cargo build --package vn-link-cli --release --verbose --target $TARGET --features $FEATURES
       - name: Run build vnt-cli
         run: cargo build --package vnt-cli --release --verbose --target $TARGET --features $FEATURES
       - name: List target
@@ -167,10 +165,8 @@ jobs:
           # windows is the only OS using a different convention for executable file name
           if [[ $OS =~ ^windows.*$ ]]; then
               EXEC_VNT_CLI=vnt-cli.exe
-              EXEC_VN_LINK_CLI=vn-link-cli.exe
           else
               EXEC_VNT_CLI=vnt-cli
-              EXEC_VN_LINK_CLI=vn-link-cli
           fi
           if [[ $GITHUB_REF_TYPE =~ ^tag$ ]]; then
             TAG=$GITHUB_REF_NAME
