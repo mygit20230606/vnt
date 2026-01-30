@@ -8,30 +8,30 @@ pub struct VntHandler {}
 
 impl VntCallback for VntHandler {
     fn success(&self) {
-        println!(" {} ", style("====== Connect Successfully ======").green())
+        //println!(" {} ", style("====== Connect Successfully ======").green())
     }
     #[cfg(feature = "integrated_tun")]
     fn create_tun(&self, info: vnt::DeviceInfo) {
-        println!("create_tun {}", info)
+        //println!("create_tun {}", info)
     }
 
     fn connect(&self, info: ConnectInfo) {
-        println!("connect {}", info)
+        //println!("connect {}", info)
     }
 
     fn handshake(&self, info: HandshakeInfo) -> bool {
-        println!("handshake {}", info);
+        //println!("handshake {}", info);
         true
     }
 
     fn register(&self, info: RegisterInfo) -> bool {
-        println!("register {}", style(info).green());
+        //println!("register {}", style(info).green());
         true
     }
 
     fn error(&self, info: ErrorInfo) {
         log::error!("error {:?}", info);
-        println!("{}", style(format!("error {}", info)).red());
+        //println!("{}", style(format!("error {}", info)).red());
         match info.code {
             ErrorType::TokenError
             | ErrorType::AddressExhausted

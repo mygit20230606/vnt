@@ -1,9 +1,17 @@
 name: Rust
 
 on:
-  push:
-    tags:
-      - '*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag name'
+        required: true
+        default: 'v0.0.0'
+      prerelease:
+        description: 'Is this a prerelease?'
+        type: boolean
+        required: true
+        default: false
 
 env:
   CARGO_TERM_COLOR: always
@@ -19,9 +27,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - TARGET: i686-unknown-linux-musl
-            OS: ubuntu-latest
-            FEATURES: ring-cipher,openssl-vendored,wss
           - TARGET: x86_64-unknown-linux-musl
             OS: ubuntu-latest
             FEATURES: ring-cipher,wss
@@ -30,24 +35,6 @@ jobs:
             FEATURES: ring-cipher,wss
           - TARGET: armv7-unknown-linux-musleabihf
             OS: ubuntu-latest
-            FEATURES: ring-cipher,wss
-          - TARGET: armv7-unknown-linux-musleabi
-            OS: ubuntu-latest
-            FEATURES: ring-cipher,wss
-          - TARGET: arm-unknown-linux-musleabihf
-            OS: ubuntu-latest
-            FEATURES: ring-cipher,wss
-          - TARGET: arm-unknown-linux-musleabi
-            OS: ubuntu-latest
-            FEATURES: ring-cipher,wss
-          - TARGET: x86_64-apple-darwin
-            OS: macos-latest
-            FEATURES: ring-cipher,wss
-          - TARGET: aarch64-apple-darwin
-            OS: macos-latest
-            FEATURES: ring-cipher,wss
-          - TARGET: i686-pc-windows-msvc
-            OS: windows-latest
             FEATURES: ring-cipher,wss
           - TARGET: x86_64-pc-windows-msvc
             OS: windows-latest
@@ -117,21 +104,9 @@ jobs:
             armv7-unknown-linux-musleabihf)
               MUSL_URI=armv7l-linux-musleabihf-cross
               ;;    
-            armv7-unknown-linux-musleabi)
-              MUSL_URI=armv7m-linux-musleabi-cross
-              ;;   
-            arm-unknown-linux-musleabihf)
-              MUSL_URI=arm-linux-musleabihf-cross
-              ;;    
-            arm-unknown-linux-musleabi)
-              MUSL_URI=arm-linux-musleabi-cross
-              ;;        
             mips-unknown-linux-musl)
               MUSL_URI=mips-linux-muslsf-cross
               URL=mips-linux-muslsf
-              ;;
-            i686-unknown-linux-musl)
-              MUSL_URI=i686-linux-musl-cross
               ;;
           esac
 
@@ -153,8 +128,7 @@ jobs:
             fi
           fi
 
-           rustup -V
-
+          rustup -V
 
       - name: Configure cargo for cross-compilation
         run: |
@@ -166,15 +140,6 @@ jobs:
           rustflags = ["-C", "target-feature=+crt-static","-C", "strip=symbols"]
           [target.armv7-unknown-linux-musleabihf]
           linker = "armv7l-linux-musleabihf-gcc"
-          rustflags = ["-C", "target-feature=+crt-static","-C", "strip=symbols"]
-          [target.armv7-unknown-linux-musleabi]
-          linker = "armv7m-linux-musleabi-gcc"
-          rustflags = ["-C", "target-feature=+crt-static","-C", "strip=symbols"]
-          [target.arm-unknown-linux-musleabihf]
-          linker = "arm-linux-musleabihf-gcc"
-          rustflags = ["-C", "target-feature=+crt-static","-C", "strip=symbols"]   
-          [target.arm-unknown-linux-musleabi]
-          linker = "arm-linux-musleabi-gcc"
           rustflags = ["-C", "target-feature=+crt-static","-C", "strip=symbols"]
           [target.mipsel-unknown-linux-musl]
           linker = "mipsel-linux-muslsf-gcc"
@@ -189,29 +154,12 @@ jobs:
           "-L", "/opt/musl_gcc/mips-linux-muslsf-cross/mips-linux-muslsf/lib",
           "-L", "/opt/musl_gcc/mips-linux-muslsf-cross/lib/gcc/mips-linux-muslsf/11.2.1"]
           [target.x86_64-pc-windows-msvc]
-          rustflags = ["-C", "target-feature=+crt-static","-C", "strip=symbols"]    
-          [target.i686-pc-windows-msvc]
-          rustflags = ["-C", "target-feature=+crt-static","-C", "strip=symbols"]      
-          [target.x86_64-apple-darwin]
-          rustflags = ["-C", "target-feature=+crt-static","-C", "strip=symbols"] 
-          [target.aarch64-apple-darwin]
           rustflags = ["-C", "target-feature=+crt-static","-C", "strip=symbols"]     
-          [target.i686-unknown-linux-musl]
-          linker = "i686-linux-musl-gcc"
-          rustflags = ["-C", "target-feature=+crt-static","-C", "strip=symbols"]   
           EOF
 
       - name: Install rust target
         if: ${{ ! endsWith(matrix.TARGET, 'freebsd') &&  ! startsWith(matrix.TARGET, 'mips') }}
         run: rustup target add $TARGET
-
-      - name: Run build vn-link-cli
-        run: |
-          if [[ $TARGET =~ ^mips.*$ ]]; then
-            cargo +nightly build --package vn-link-cli --release --target $TARGET -Z build-std=std,panic_abort --features $FEATURES
-          else
-            cargo build --package vn-link-cli --release --target $TARGET --features $FEATURES
-          fi
 
       - name: Run build vnt-cli
         run: |
@@ -220,25 +168,23 @@ jobs:
           else
             cargo build --package vnt-cli --release --target $TARGET --features $FEATURES
           fi
+
       - name: List target
         run: find ./target
+
       - name: Compress
         run: |
           mkdir -p ./artifacts
           if [[ $OS =~ ^windows.*$ ]]; then
               EXEC_VNT_CLI=vnt-cli.exe
-              EXEC_VN_LINK_CLI=vn-link-cli.exe
           else
               EXEC_VNT_CLI=vnt-cli
-              EXEC_VN_LINK_CLI=vn-link-cli
           fi
-          if [[ $GITHUB_REF_TYPE =~ ^tag$ ]]; then
-            TAG=$GITHUB_REF_NAME
-          else
-            TAG=$GITHUB_SHA
-          fi
+          
+          # 使用手动输入的标签名
+          TAG="${{ github.event.inputs.tag_name }}"
+          
           mv ./target/$TARGET/release/$EXEC_VNT_CLI ./artifacts/$EXEC_VNT_CLI
-          mv ./target/$TARGET/release/$EXEC_VN_LINK_CLI ./artifacts/$EXEC_VN_LINK_CLI
           mv ./README ./artifacts/README.txt
           cd ./artifacts
           tar -czf vnt-$TARGET-$TAG.tar.gz *
@@ -252,7 +198,6 @@ jobs:
           path: ./artifacts/upload_file
 
   deploy:
-    if: startsWith(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -260,13 +205,27 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: ./artifacts
-      - name: List
-        run: find ./artifacts
-      - name: Release
-        uses: svenstaro/upload-release-action@v2
+          
+      - name: List files for debug
+        run: find ./artifacts -type f | head -20
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./artifacts/**/*.tar.gz
-          tag: ${{ github.ref }}
-          overwrite: true
-          file_glob: true
+          name: Release ${{ github.event.inputs.tag_name }}
+          tag: ${{ github.event.inputs.tag_name }}
+          body: |
+            # Release ${{ github.event.inputs.tag_name }}
+            
+            Built from commit ${{ github.sha }}
+            Date: ${{ github.event.repository.updated_at }}
+            
+            ## Files included:
+            - vnt-cli (main executable)
+            - README.txt
+          prerelease: ${{ github.event.inputs.prerelease }}
+          artifacts: './artifacts/**/*.tar.gz'
+          artifactContentType: 'application/gzip'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          draft: false
+          allowUpdates: true
